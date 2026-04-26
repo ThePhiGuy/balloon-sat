@@ -12,6 +12,10 @@ typedef struct {
     uint8_t rx_volume;
 } dra818_state;
 
+char* send_group_setting(radio_channel channel, dra818_state state);
+char* send_volume_setting(radio_channel channel, dra818_state state);
+char* send_handshake(radio_channel channel);
+
 static dra818_state vhf_state = {0};
 static dra818_state uhf_state = {0};
 
@@ -236,9 +240,66 @@ system_status radio_verify_module(radio_channel channel) {
     Check radio response from AT command
 */
 system_status check_radio_response(char* response) {
-    // TODO: Implement response parsing
-    // - Check if response indicates success or error
-    // - Parse response data if needed
-    // - Return appropriate status
+    if (response == 0) {
+        return SYS_ERROR;
+    }
+    
+    if (strstr(response, ":0") != 0) {
+        return SYS_OK;
+    }
+    
+    if (strstr(response, ":1") != 0) {
+        return SYS_ERROR;
+    }
+    
+    return SYS_ERROR;
+}
+
+char* send_group_setting(radio_channel channel, dra818_state state) {
+    // FORMAT AT+DMOSETGROUP=GBW,TFV, RFV,Tx_CTCSS,SQ,Rx_CTCSS<CR><LF>
+    static char command[128];
+
+    uint8_t gbw = 1; // 12.5kHz for APRS
+    uint32_t tfv = state.frequency;
+    uint32_t rfv = state.frequency;
+    uint8_t tx_ctcss = state.tx_ctcss;
+    uint8_t rx_ctcss = state.rx_ctcss;
+    uint8_t sq = state.squelch;
+
+    snprintf(command, sizeof(command), "AT+DMOSETGROUP=%d,%lu,%lu,%d,%d,%d\r\n",
+            gbw, tfv, rfv, tx_ctcss, sq, rx_ctcss);
+        
+    return command;
+}
+
+char* send_volume_setting(radio_channel channel, dra818_state state) {
+    // FORMAT AT+DMOSETVOLUME=x <CR><LF>
+    static char command[32];
+
+    uint8_t vol = state.rx_volume;
+
+    snprintf(command, sizeof(command), "AT+DMOSETVOLUME=%d\r\n", vol);
+
+    return command;
+}
+
+char* send_handshake(radio_channel channel) {
+    static char command[32];
+    
+    snprintf(command, sizeof(command), "AT+DMOCONNECT <CR><LF>");
+
+    return command;
+}
+
+system_status uart_send(uint8_t *data, uint16_t size) {
+    // TODO: Implement actual UART
+    // For now, just pretend it worked
+    return SYS_OK;
+}
+
+system_status uart_receive(uint8_t *buffer, uint16_t size, uint32_t timeout) {
+    // TODO: Implement actual UART
+    // For now, return fake success response
+    strcpy((char*)buffer, "+DMOSETGROUP:0\r\n");
     return SYS_OK;
 }

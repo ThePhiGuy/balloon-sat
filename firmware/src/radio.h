@@ -56,7 +56,8 @@ system_status radio_verify_module(radio_channel channel); // used to check if mo
 
 system_status check_radio_response(char* response); // used to check if a change was made
 
-
+system_status uart_receive(uint8_t *buffer, uint16_t size, uint32_t timeout);
+system_status uart_send(uint8_t *data, uint16_t size);
 
 
 #endif
