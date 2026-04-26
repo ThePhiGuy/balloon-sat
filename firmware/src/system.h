@@ -2,6 +2,7 @@
 #define SYSTEM_H
 
 #include <stdint.h>
+#include "radio.h"
 
 /*
     Defines system states for the finite state machine loop
@@ -40,7 +41,6 @@ typedef enum {
 typedef enum {
     VHF_PRIMARY,
     UHF_PRIMARY,
-    DUAL_ACTIVE
 } radio_behavior;
 
 /*
@@ -96,7 +96,14 @@ typedef enum {
 typedef struct {
     system_config current_config;
     system_state previous_state;
+
+    radio_channel last_recv;
+    packet rx_packet;
+    packet tX_packet;
+    uint8_t tx_pending;
+
     system_status last_status;
+    
     uint32_t uptime_ms;
     uint32_t state_entry_time_ms;
     uint16_t battery_voltage_mv;
@@ -111,5 +118,14 @@ typedef struct {
     uint32_t timestamp_ms;
     uint16_t extra_data;
 } system_fault;
+
+/*
+    Basic struct for packet handling
+*/
+typedef struct {
+    uint8_t data[350];
+    uint16_t len;
+    radio_channel source_radio;
+} packet;
 
 #endif
